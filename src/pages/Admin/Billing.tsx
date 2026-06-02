@@ -85,6 +85,9 @@ export default function Billing() {
   const [statusFilter, setStatusFilter] = useState<string>("Semua Status")
   const [statusOpen, setStatusOpen] = useState(false)
   const [page, setPage] = useState(1)
+  const [selectedMonth, setSelectedMonth] = useState(
+    new Date().toISOString().slice(0, 7)
+  )
 
   const statusRef = useRef<HTMLDivElement>(null)
   const [stats, setStats] =
@@ -173,6 +176,29 @@ fetchBillingTable()
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  // Helper: Extract month-year from terbit date string (e.g., "1 Mei 2026" -> "2026-05")
+  const getMonthYearFromTerbit = (terbitStr: string) => {
+    try {
+      const months: { [key: string]: string } = {
+        "Januari": "01", "Februari": "02", "Maret": "03", "April": "04",
+        "Mei": "05", "Juni": "06", "Juli": "07", "Agustus": "08",
+        "September": "09", "Oktober": "10", "November": "11", "Desember": "12"
+      }
+      const parts = terbitStr.split(" ")
+      if (parts.length >= 3) {
+        const monthName = parts[1]
+        const year = parts[2]
+        const monthNum = months[monthName]
+        if (monthNum && year) {
+          return `${year}-${monthNum}`
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing terbit date:", e)
+    }
+    return null
+  }
+
   // Filter data
   const filtered =
   billingData.filter(
@@ -180,7 +206,8 @@ fetchBillingTable()
       unit,
       email,
       id,
-      status
+      status,
+      terbit
     }) => {
 
       const q =
@@ -208,12 +235,17 @@ fetchBillingTable()
         status ===
           statusFilter
 
+      const matchMonth =
+        !selectedMonth ||
+        getMonthYearFromTerbit(terbit) === selectedMonth
+
       return (
         matchSearch &&
-        matchStatus
+        matchStatus &&
+        matchMonth
       )
 
-})
+  })
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentRows = filtered.slice(
@@ -498,6 +530,19 @@ fetchBillingTable()
                 ))}
               </div>
             )}
+          </div>
+
+          {/* MONTH PICKER */}
+          <div className="w-[160px] h-[50px] rounded-full border border-[#EAECF0] bg-white px-5 flex items-center shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => {
+                setSelectedMonth(e.target.value)
+                setPage(1)
+              }}
+              className="w-full bg-transparent outline-none text-[14px] text-[#344054] cursor-pointer"
+            />
           </div>
         </div>
 

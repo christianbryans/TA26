@@ -191,7 +191,37 @@ if (!response.ok) {
   [apiData]
 );
 
-  const maxValue = Math.max(...chartData.map((d) => d.value), 10);
+  const maxValue = chartData.length
+    ? Math.max(...chartData.map((d) => d.value), 0)
+    : 0;
+  const getYAxisScale = (value: number) => {
+    if (value <= 0.2) {
+      return { top: 0.2, step: 0.05 };
+    }
+
+    if (value <= 0.5) {
+      return { top: 0.5, step: 0.1 };
+    }
+
+    if (value <= 2) {
+      return { top: 2, step: 0.5 };
+    }
+
+    if (value <= 5) {
+      return { top: 5, step: 1 };
+    }
+
+    if (value <= 20) {
+      return { top: Math.ceil(value / 5) * 5, step: 5 };
+    }
+
+    return { top: Math.ceil(value / 10) * 10, step: 10 };
+  };
+
+  const { top: yMax, step: yStep } = getYAxisScale(maxValue);
+  const yTicks = Array.from({ length: Math.floor(yMax / yStep) + 1 }, (_, index) =>
+    Number((index * yStep).toFixed(2))
+  );
 
   return (
     <div className="w-full h-[260px]">
@@ -256,17 +286,12 @@ if (!response.ok) {
 
 <YAxis
   orientation="right"
-  domain={
-  range === "Harian" || range === "Mingguan"
-    ? [
-        (dataMin) => dataMin - 1,
-        (dataMax) => dataMax + 1
-      ]
-    : [0, maxValue + 10]
-}
+  domain={[0, yMax]}
+  ticks={yTicks}
   axisLine={false}
   tickLine={false}
   tick={{ fontSize: 11, fill: "#9CA3AF" }}
+  tickFormatter={(value) => `${value} m³`}
 />
         </ComposedChart>
       </ResponsiveContainer>

@@ -106,6 +106,7 @@ export default function Dashboard() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
 
 const [waterPrice, setWaterPrice] = useState("")
+const [currentWaterPrice, setCurrentWaterPrice] = useState<string>("")
 
   const [range, setRange] = useState<RangeType>("6 Bulan Terakhir")
   
@@ -138,6 +139,35 @@ const [totalBills,
 const [paidPercentage,
   setPaidPercentage] =
   useState(0);
+
+  useEffect(() => {
+    const loadCurrentPrice = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://localhost:3000/api/v1/admin/unit-price", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = await response.json();
+        const latestPrice = result?.data?.price;
+
+        if (latestPrice !== undefined && latestPrice !== null) {
+          const latestValue = String(latestPrice);
+          setCurrentWaterPrice(latestValue);
+
+          if (showPricePopup || !waterPrice) {
+            setWaterPrice(latestValue);
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    loadCurrentPrice();
+  }, [showPricePopup]);
   const pieData = [
   { name: "Sudah bayar", value: paidPercentage },
   { name: "Belum bayar", value: 100 - paidPercentage },
@@ -492,6 +522,10 @@ const paginatedPayments =
           Harga per m³
         </label>
 
+        <p className="mt-2 text-[12px] text-[#98A2B3]">
+          Harga saat ini: {currentWaterPrice ? `Rp ${Number(currentWaterPrice).toLocaleString('id-ID')}` : '-'}
+        </p>
+
         <input
           type="text"
           value={waterPrice}
@@ -508,6 +542,7 @@ const paginatedPayments =
             outline-none
             focus:border-[#3FACFF]
           "
+            placeholder={currentWaterPrice ? `Contoh: ${currentWaterPrice}` : "Masukkan harga per m³"}
         />
 
       </div>

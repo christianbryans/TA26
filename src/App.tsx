@@ -60,7 +60,7 @@ export default function App() {
   element={<PaymentSuccess />}
 />
       {/* ADMIN */}
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="monitoring" element={<Monitoring />} />
         <Route path="billing" element={<Billing />} />

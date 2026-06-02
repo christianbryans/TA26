@@ -93,6 +93,18 @@ const [historyBills, setHistoryBills] =
   const canDownloadInvoice =
   currentBill?.status === "PAID";
 
+  const visibleHistoryBills = historyBills.filter(
+    (bill) => bill.id !== currentBill?.id
+  );
+
+  // Defensive numeric fallbacks to avoid NaN when backend returns null/undefined
+  const billUnitPrice = Number(currentBill?.unitPrice ?? 0);
+  const billWaterUsage = Number(currentBill?.waterUsage ?? 0);
+  const adminFee = 2500;
+  const waterCost = billWaterUsage * billUnitPrice;
+  const tax = waterCost * 0.1;
+  const totalPayment = waterCost + adminFee + tax;
+
   useEffect(() => {
 
   const loadBillData = async () => {
@@ -203,21 +215,7 @@ console.log("BILL ID", currentBill?.id);
     alert("Gagal membuat pembayaran");
   }
 };
-const adminFee = 2500;
-
-const waterPrice =
-  monthlyVolume * unitPrice;
-
-const tax =
-  waterPrice * 0.1;
-
 const penalty = 0;
-
-const totalPayment =
-  waterPrice +
-  adminFee +
-  tax +
-  penalty;
   const dueDate =
   new Date();
 
@@ -342,7 +340,7 @@ const currentMonthYear =
             <p className="font-semibold">{
   isPaidOff
     ? "-"
-    : `${currentBill?.waterUsage} m³`
+    : `${billWaterUsage} m³`
 }</p>
           </div>
 
@@ -351,7 +349,7 @@ const currentMonthYear =
             <p className="font-semibold">{
   isPaidOff
     ? "-"
-    : rupiah(currentBill?.totalAmount * 0.1)
+    : rupiah(tax)
 }</p>
           </div>
 
@@ -360,7 +358,7 @@ const currentMonthYear =
             <p className="font-semibold">{
   isPaidOff
     ? "-"
-    : rupiah(currentBill?.unitPrice)
+    : rupiah(billUnitPrice)
 }</p>
           </div>
 
@@ -369,7 +367,7 @@ const currentMonthYear =
             <p className="font-semibold">{
   isPaidOff
     ? "-"
-    : rupiah(currentBill?.totalAmount)
+    : rupiah(waterCost)
 }</p>
           </div>
 
@@ -384,11 +382,7 @@ const currentMonthYear =
         </p>
 
         <p className="text-[18px] font-semibold text-gray-900">
-          {
-  isPaidOff
-    ? "Lunas"
-    : rupiah(currentBill?.totalAmount + 2500 + (currentBill?.totalAmount * 0.1))
-}
+            {isPaidOff ? "Lunas" : rupiah(totalPayment)}
         </p>
 
       </div>
@@ -451,15 +445,16 @@ const currentMonthYear =
 
 </div>
 
-{historyBills.length === 0 ? (
+{visibleHistoryBills.length === 0 ? (
 
   <p className="text-[12px] text-gray-400">
     Belum ada riwayat tagihan
   </p>
 
+
 ) : (
 
-  historyBills.map((bill) => (
+  visibleHistoryBills.map((bill) => (
 
   <div
     key={bill.id}
@@ -479,18 +474,25 @@ const currentMonthYear =
     </p>
 
     <p className="text-gray-500">
-      {
-        new Date(
-          bill.updatedAt
-        ).toLocaleDateString(
-          "id-ID",
-          {
-            day: "numeric",
-            month: "short",
-            year: "numeric"
-          }
-        )
-      }
+      {bill.payments?.[0]?.createdAt
+        ? new Date(bill.payments[0].createdAt).toLocaleDateString(
+            "id-ID",
+            {
+              day: "numeric",
+              month: "short",
+              year: "numeric"
+            }
+          )
+        : bill.status === "PAID" && bill.updatedAt
+        ? new Date(bill.updatedAt).toLocaleDateString(
+            "id-ID",
+            {
+              day: "numeric",
+              month: "short",
+              year: "numeric"
+            }
+          )
+        : "-"}
     </p>
 
   </div>

@@ -250,7 +250,7 @@ const dueDateText =
                   </span>
                 </div>
               </div>
-              <p className="text-gray-400 text-[10px]">Pemakaian Bulan Ini</p>
+              <p className="text-gray-400 text-[10px]">Pemakaian Kamu</p>
               <h2 className="text-[22px] font-bold mt-1 text-gray-900">{(monthlyVolume/1000).toFixed(1)} m³</h2>
               <p
   className={`text-[10px] font-semibold mt-2 ${
