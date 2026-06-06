@@ -7,6 +7,8 @@ import prisma from './config/db.js';
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+console.log('HOSTINGER PORT:', PORT, 'NODE_ENV:', NODE_ENV);
+
 const startServer = async () => {
   try {
     if (!process.env.DATABASE_URL) {
