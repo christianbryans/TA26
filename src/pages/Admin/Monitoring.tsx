@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import notifIcon from "../../assets/adminDasbord/Lonceng.svg"
 import Trash from "../../assets/adminMonitor/Trash.svg";
+import { API_URL } from "../../config/api";
 
 /* ===================== DATA ===================== */
 
@@ -106,7 +107,7 @@ useEffect(() => {
 
       const response =
         await fetch(
-          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/monitoring-units`,
+          `${API_URL}/admin/monitoring-units`,
           {
             headers: {
               Authorization:

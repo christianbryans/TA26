@@ -5,6 +5,7 @@ import Gedung from "../assets/Login/Gedung.svg";
 import Logo from "../assets/Login/TeksAquora.svg";
 import Water from "../assets/Login/Water.svg";
 import Mobile from "../assets/Login/Mobile.svg";
+import { API_URL } from "../config/api";
 
 export default function ActivateAccount() {
   const [searchParams] = useSearchParams();
@@ -28,8 +29,6 @@ export default function ActivateAccount() {
   const [name, setName] = useState("");
 
   const navigate = useNavigate();
-
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
 
   useEffect(() => {
     if (!token) return;

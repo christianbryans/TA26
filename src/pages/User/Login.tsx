@@ -7,6 +7,7 @@ import Logo from "../../assets/Login/TeksAquora.svg";
 import Water from "../../assets/Login/Water.svg";
 import Teks from "../../assets/adminDasbord/Logo.svg";
 import Berhasil from "../../assets/adminDasbord/Berhasil.svg";
+import { API_URL } from "../../config/api";
 
 export default function Login() {
 
@@ -38,7 +39,7 @@ const handleLogin = async () => {
   try {
 
     const response = await axios.post(
-      `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/auth/login`,
+      `${API_URL}/auth/login`,
       {
         email,
         password,

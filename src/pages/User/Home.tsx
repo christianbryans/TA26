@@ -11,6 +11,7 @@ import Line from "../../assets/beranda/Line.svg";
 import Persen from "../../assets/beranda/persen.svg";
 import LogoutIcon from "../../assets/beranda/Logout.svg";
 import IconLogout from "../../assets/beranda/IconLogout.svg";
+import { API_URL } from "../../config/api";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export default function Home() {
 
         const response =
           await fetch(
-            `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/dashboard/monthly-volume`,
+            `${API_URL}/dashboard/monthly-volume`,
             {
               headers: {
                 Authorization:
@@ -98,7 +99,7 @@ async () => {
 
     const response =
       await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/dashboard/current-bill`,
+        `${API_URL}/dashboard/current-bill`,
         {
           headers: {
             Authorization:
@@ -147,7 +148,7 @@ const user =
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/dashboard/chart?range=${activeTab}`,
+          `${API_URL}/dashboard/chart?range=${activeTab}`,
           {
             headers: {
               Authorization: `Bearer ${token}`

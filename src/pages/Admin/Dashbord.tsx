@@ -8,6 +8,7 @@ import bulanIcon    from "../../assets/adminDasbord/Bulan.svg"
 import kelolaIcon   from "../../assets/adminDasbord/Kelola.svg"
 import notifIcon    from "../../assets/adminDasbord/Lonceng.svg"
 import Berhasil     from "../../assets/adminDasbord/Berhasil.svg"
+import { API_URL } from "../../config/api";
 
 const RANGE_OPTIONS = ["3 Bulan Terakhir", "6 Bulan Terakhir"] as const
 type RangeType = typeof RANGE_OPTIONS[number]
@@ -84,7 +85,7 @@ const [unpaidTotal, setUnpaidTotal] =
     const loadCurrentPrice = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/unit-price`, {
+        const response = await fetch(`${API_URL}/admin/unit-price`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -119,7 +120,7 @@ const fetchAdminStats = async () => {
 
       const response =
         await fetch(
-          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin`,
+          `${API_URL}/admin`,
           {
             headers: {
               Authorization:
@@ -212,7 +213,7 @@ useEffect(() => {
 
       const response =
         await fetch(
-          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/usage-chart?range=${months}`,
+          `${API_URL}/admin/usage-chart?range=${months}`,
           {
             headers: {
               Authorization:
@@ -285,7 +286,7 @@ const monthBadgeType =
 
       const response =
         await fetch(
-          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/payment-history`,
+          `${API_URL}/admin/payment-history`,
           {
             headers: {
               Authorization:
@@ -503,7 +504,7 @@ const paginatedPayments =
 
     const response =
       await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/unit-price`,
+        `${API_URL}/admin/unit-price`,
         {
           method: "POST",
 

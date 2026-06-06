@@ -6,6 +6,7 @@ import Berhasil from "../../assets/adminDasbord/Berhasil.svg";
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../config/api";
 
 export default function ForgotPassword() {
 
@@ -25,7 +26,7 @@ export default function ForgotPassword() {
   try {
 
     const response = await axios.post(
-      `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/auth/forgot-password`,
+      `${API_URL}/auth/forgot-password`,
       {
         email,
       }

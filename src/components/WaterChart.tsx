@@ -9,6 +9,7 @@ import {
   Tooltip,
 } from "recharts";
 import { useMemo, useEffect, useState } from "react";
+import { API_URL } from "../config/api";
 
 type ChartRange = "Harian" | "Mingguan" | "Bulanan";
 
@@ -139,7 +140,7 @@ useEffect(() => {
 if (!token) return;
 
 const response = await fetch(
-  `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/dashboard/chart?range=${range}`,
+  `${API_URL}/dashboard/chart?range=${range}`,
   {
     headers: {
       Authorization:

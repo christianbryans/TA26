@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { API_URL } from "../config/api";
 
 type ChartRange = "Harian" | "Mingguan" | "Bulanan";
 type ChartDatum = { x: string; value: number };
@@ -60,7 +61,7 @@ export default function WaterChartBar({ range }: WaterChartBarProps) {
 if (!token) return;
 
 const response = await fetch(
-  `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/dashboard/chart?range=${range}`,
+  `${API_URL}/dashboard/chart?range=${range}`,
   {
     headers: {
       Authorization:

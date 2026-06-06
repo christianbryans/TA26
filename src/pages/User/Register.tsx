@@ -3,6 +3,7 @@ import Teks from "../../assets/Login/TeksAquora.svg";
 import Logo from "../../assets/adminDasbord/Logo.svg";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../config/api";
 
 export default function Register() {
 
@@ -39,7 +40,7 @@ export default function Register() {
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/auth/register`,
+        `${API_URL}/auth/register`,
         {
           method: "POST",
           headers: {

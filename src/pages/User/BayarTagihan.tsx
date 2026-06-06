@@ -6,6 +6,7 @@ import Panah from "../../assets/Tagihan/Panah.svg";
 import BelumBayar from "../../assets/beranda/Blumbayar.svg";
 import Wallet from "../../assets/beranda/Wallet.svg";
 import Unduh from "../../assets/Tagihan/Unduh.svg";
+import { API_URL } from "../../config/api";
 
 export default function BayarTagihan() {
 const handleDownloadInvoice =
@@ -26,7 +27,7 @@ async () => {
 
     const response =
       await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/payment/invoice/${currentBill.id}`,
+        `${API_URL}/payment/invoice/${currentBill.id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -109,7 +110,7 @@ async () => {
 
 const currentBillResponse =
   await fetch(
-    `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/dashboard/current-bill`,
+    `${API_URL}/dashboard/current-bill`,
     {
       headers: {
         Authorization:
@@ -135,7 +136,7 @@ setCurrentBill(
       // BILL HISTORY
       const billsResponse =
         await fetch(
-          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/billing/user/${user.id}`
+          `${API_URL}/billing/user/${user.id}`
         );
 
       const billsData =
@@ -169,7 +170,7 @@ const handlePay = async () => {
 console.log("BILL ID", currentBill?.id);
 
    const response = await axios.post(
-  `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/payment`,
+  `${API_URL}/payment`,
   {
     billId: currentBill.id,
   }

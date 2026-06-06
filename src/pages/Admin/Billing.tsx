@@ -5,6 +5,7 @@ import totalIcon from "../../assets/adminDasbord/Total.svg"
 import bayar from "../../assets/AdminBilling/Paid.svg"
 import Belum from "../../assets/AdminBilling/Wait.svg"
 import Lewat from "../../assets/AdminBilling/JatuhTempo.svg"
+import { API_URL } from "../../config/api";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
@@ -106,7 +107,7 @@ export default function Billing() {
 
     const response =
       await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/billing-table`,
+        `${API_URL}/admin/billing-table`,
         {
           headers: {
             Authorization:
@@ -139,7 +140,7 @@ fetchBillingTable()
 
       const response =
         await fetch(
-          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/billing-stats`,
+          `${API_URL}/admin/billing-stats`,
           {
             headers: {
               Authorization:
