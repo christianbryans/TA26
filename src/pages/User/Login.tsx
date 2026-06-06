@@ -46,10 +46,7 @@ const handleLogin = async () => {
     );
 
     // simpan token
-    localStorage.setItem(
-      "token",
-      response.data.token
-    );
+    localStorage.setItem("token", response.data.token);
 
     // simpan user
     localStorage.setItem(
@@ -57,7 +54,9 @@ const handleLogin = async () => {
       JSON.stringify(response.data.user)
     );
 
-    navigate("/home");
+    const nextRoute =
+      response.data.user?.role === "admin" ? "/admin" : "/home";
+    navigate(nextRoute);
 
   } catch (error: any) {
 

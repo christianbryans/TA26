@@ -161,10 +161,9 @@ useEffect(() => {
       <div className="w-full bg-white rounded-[24px] border border-[#EEF2F6] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
 
         {/* HEADER */}
-        <div className="grid grid-cols-[1fr_1.4fr_1fr_1.6fr_60px] px-8 py-5 border-b border-[#F2F4F7]">
+        <div className="grid grid-cols-[1fr_1.4fr_1.6fr_60px] px-8 py-5 border-b border-[#F2F4F7]">
           <p className="text-[14px] font-medium text-[#98A2B3]">Unit</p>
           <p className="text-[14px] font-medium text-[#98A2B3]">ID Meter</p>
-          <p className="text-[14px] font-medium text-[#98A2B3]">Konsumsi Bulan Ini</p>
           <p className="text-[14px] font-medium text-[#98A2B3]">Email Penghuni</p>
           <div />
         </div>
@@ -173,10 +172,9 @@ useEffect(() => {
         <div className="divide-y divide-[#F2F4F7]">
           {paginated.length > 0 ? paginated.map(row => (
             <div key={row.id}
-              className="grid grid-cols-[1fr_1.4fr_1fr_1.6fr_60px] items-center px-8 py-6 hover:bg-[#F9FAFB] transition">
+              className="grid grid-cols-[1fr_1.4fr_1.6fr_60px] items-center px-8 py-6 hover:bg-[#F9FAFB] transition">
               <p className="text-[16px] font-medium text-[#344054]">{row.unit}</p>
               <p className="text-[16px] font-medium text-[#344054]">{row.idMeter}</p>
-              <p className="text-[16px] font-medium text-[#344054]">{row.konsumsi}</p>
               <p className="text-[14px] font-normal text-[#98A2B3] truncate pr-4">{row.email}</p>
        <button
   onClick={() =>
