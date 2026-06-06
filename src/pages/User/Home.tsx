@@ -22,8 +22,6 @@ export default function Home() {
   useState(0);
   const [monthlyDifference, setMonthlyDifference] =
   useState(0);
-  const [estimatedBill, setEstimatedBill] =
-  useState(0);
   
   const [showLogoutPopup, setShowLogoutPopup] =
   useState(false);
@@ -69,10 +67,6 @@ export default function Home() {
         setMonthlyDifference(
   result.difference
 );
-
-        setEstimatedBill(
-          result.estimatedBill
-        );
 
       } catch (error) {
 

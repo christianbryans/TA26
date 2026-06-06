@@ -26,10 +26,11 @@ async () => {
 
     const response =
       await fetch(
-          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/payment/invoice/${currentBill.id}`,
-            Authorization:
-              `Bearer ${token}`
-          }
+        `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/payment/invoice/${currentBill.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -75,13 +76,7 @@ async () => {
 
 };
   const navigate = useNavigate();
-  const [monthlyVolume, setMonthlyVolume] =
-  useState(0);
-
-const [unitPrice, setUnitPrice] =
-  useState(0);
-
-const [historyBills, setHistoryBills] =
+  const [historyBills, setHistoryBills] =
   useState<any[]>([]);
 
   const [currentBill, setCurrentBill] =
@@ -129,29 +124,6 @@ const currentBillData =
 setCurrentBill(
   currentBillData.data
 );
-
-      // DASHBOARD
-      const dashboardResponse =
-        await fetch(
-          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/dashboard/monthly-volume`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`
-            }
-          }
-        );
-
-      const dashboardData =
-        await dashboardResponse.json();
-
-      setMonthlyVolume(
-        dashboardData.currentVolume
-      );
-
-      setUnitPrice(
-        dashboardData.unitPrice
-      );
 
       // USER
       const user =
@@ -213,25 +185,6 @@ console.log("BILL ID", currentBill?.id);
     alert("Gagal membuat pembayaran");
   }
 };
-const penalty = 0;
-  const dueDate =
-  new Date();
-
-dueDate.setMonth(
-  dueDate.getMonth() + 1
-);
-
-dueDate.setDate(1);
-
-const formattedDueDate =
-  dueDate.toLocaleDateString(
-    "id-ID",
-    {
-      day: "numeric",
-      month: "short",
-      year: "numeric"
-    }
-  );
   const rupiah = (value: number) =>
   new Intl.NumberFormat(
     "id-ID",
@@ -243,14 +196,6 @@ const formattedDueDate =
   ).format(value);
   const now = new Date();
 
-const currentMonthYear =
-  now.toLocaleDateString(
-    "id-ID",
-    {
-      month: "long",
-      year: "numeric"
-    }
-  );
   const lastDayOfMonth =
   new Date(
     now.getFullYear(),

@@ -1,9 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell,
-} from "recharts"
-
+import { PieChart, Pie, Cell } from "recharts"
 import WaterChartAdmin from "../../components/WaterChartAdmin"
 
 import totalIcon    from "../../assets/adminDasbord/Total.svg"
@@ -13,56 +9,10 @@ import kelolaIcon   from "../../assets/adminDasbord/Kelola.svg"
 import notifIcon    from "../../assets/adminDasbord/Lonceng.svg"
 import Berhasil     from "../../assets/adminDasbord/Berhasil.svg"
 
-/* ===================== DATA ===================== */
-const barData = {
-  "1 Bulan Terakhir": [
-    { month: "Jan", values: [10000, 3000, 1200, 100] },
-  ],
-  "3 Bulan Terakhir": [
-    { month: "Jan", values: [10000, 3000, 1200, 100] },
-    { month: "Feb", values: [10000, 1200, 600, 300] },
-    { month: "Mar", values: [900, 600, 1200, 3000] },
-  ],
-  "6 Bulan Terakhir": [
-    { month: "Jan", values: [10000, 3000, 1200, 100] },
-    { month: "Feb", values: [10000, 1200, 600, 300] },
-    { month: "Mar", values: [900, 600, 1200, 3000] },
-    { month: "Apr", values: [600, 900, 5200, 3000] },
-    { month: "May", values: [3000, 1200, 5200, 3000] },
-    { month: "Jun", values: [1200, 3000, 1000, 2800] },
-  ],
-}
-
 const RANGE_OPTIONS = ["3 Bulan Terakhir", "6 Bulan Terakhir"] as const
 type RangeType = typeof RANGE_OPTIONS[number]
 
-
-const UNIT_LIST = ["Unit A-10", "Unit A-11", "Unit A-12", "Unit B-01", "Unit B-02", "Unit C-05"]
-
 type FilterType = "All" | "Lunas" | "Belum Dibayar"
-
-
-/* ===================== CUSTOM ROUNDED BAR ===================== */
-function RoundedBar(props: any) {
-  const { x, y, height, fill } = props
-  if (!height || height <= 0) return null
-  return (
-    <rect x={x} y={y} width={36.06} height={height} rx={18} ry={18} fill={fill} />
-  )
-}
-
-/* ===================== CUSTOM TOOLTIP ===================== */
-function CustomTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-white border border-gray-100 rounded-[10px] shadow-lg px-3 py-2">
-      <p className="text-[11px] text-gray-400 mb-0.5">{label}</p>
-      <p className="text-[13px] font-semibold text-gray-800">
-        {payload[0].value.toLocaleString()} m³
-      </p>
-    </div>
-  )
-}
 
 /* ===================== STAT CARD ===================== */
 type StatCardProps = {
@@ -128,17 +78,6 @@ const [totalUsers, setTotalUsers] =
 const [todayUsage, setTodayUsage] =
   useState(0);
 const [unpaidTotal, setUnpaidTotal] =
-  useState(0);
-  const [paidBills,
-  setPaidBills] =
-  useState(0);
-
-const [totalBills,
-  setTotalBills] =
-  useState(0);
-
-const [paidPercentage,
-  setPaidPercentage] =
   useState(0);
 
   useEffect(() => {
@@ -222,18 +161,6 @@ setTodayUsage(
       setTotalUsers(
         result.totalUsers
       );
-
-      setPaidBills(
-  result.paidBills
-);
-
-setTotalBills(
-  result.totalBills
-);
-
-setPaidPercentage(
-  result.paidPercentage
-);
 
     } catch (error) {
 
