@@ -117,6 +117,7 @@ const [currentWaterPrice, setCurrentWaterPrice] = useState<string>("")
 
   const [paymentSearch, setPaymentSearch] = useState("")
   const [filterStatus, setFilterStatus]   = useState<FilterType>("All")
+  const [selectedMonth, setSelectedMonth] = useState("")
   const [filterOpen, setFilterOpen]       = useState(false)
   const filterRef = useRef<HTMLDivElement>(null)
   const [activeDevices, setActiveDevices] =
@@ -144,7 +145,7 @@ const [paidPercentage,
     const loadCurrentPrice = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:3000/api/v1/admin/unit-price", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/unit-price`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -168,10 +169,6 @@ const [paidPercentage,
 
     loadCurrentPrice();
   }, [showPricePopup]);
-  const pieData = [
-  { name: "Sudah bayar", value: paidPercentage },
-  { name: "Belum bayar", value: 100 - paidPercentage },
-]
 
   useEffect(() => {
 const fetchAdminStats = async () => {
@@ -183,7 +180,7 @@ const fetchAdminStats = async () => {
 
       const response =
         await fetch(
-          "http://localhost:3000/api/v1/admin",
+          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin`,
           {
             headers: {
               Authorization:
@@ -288,7 +285,7 @@ useEffect(() => {
 
       const response =
         await fetch(
-          `http://localhost:3000/api/v1/admin/usage-chart?range=${months}`,
+          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/usage-chart?range=${months}`,
           {
             headers: {
               Authorization:
@@ -361,7 +358,7 @@ const monthBadgeType =
 
       const response =
         await fetch(
-          "http://localhost:3000/api/v1/admin/payment-history",
+          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/payment-history`,
           {
             headers: {
               Authorization:
@@ -391,10 +388,24 @@ const monthBadgeType =
 
 
   const filteredPayments = paymentHistory.filter(row => {
-    const matchSearch = row.id.toLowerCase().includes(paymentSearch.toLowerCase())
+    const matchSearch =
+      row.id.toLowerCase().includes(paymentSearch.toLowerCase()) ||
+      row.pemakaian.toLowerCase().includes(paymentSearch.toLowerCase()) ||
+      row.tagihan.toLowerCase().includes(paymentSearch.toLowerCase()) ||
+      row.waktu.toLowerCase().includes(paymentSearch.toLowerCase())
+
     const matchFilter = filterStatus === "All" || row.status === filterStatus
-    return matchSearch && matchFilter
+    const matchMonth = !selectedMonth || row.monthKey === selectedMonth
+    return matchSearch && matchFilter && matchMonth
   })
+
+  const filteredPaidCount = filteredPayments.filter((row) => row.status === "Lunas").length
+  const filteredTotalCount = filteredPayments.length
+  const filteredPaidPercentage = filteredTotalCount > 0 ? (filteredPaidCount / filteredTotalCount) * 100 : 0
+  const filteredPieData = [
+    { name: "Sudah bayar", value: filteredPaidPercentage },
+    { name: "Belum bayar", value: 100 - filteredPaidPercentage },
+  ]
 
   const itemsPerPage = 15
 
@@ -565,7 +576,7 @@ const paginatedPayments =
 
     const response =
       await fetch(
-        "http://localhost:3000/api/v1/admin/unit-price",
+        `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/unit-price`,
         {
           method: "POST",
 
@@ -766,13 +777,23 @@ const paginatedPayments =
                   {filterOpen && (
                     <div className="absolute right-0 top-[40px] w-[160px] bg-white rounded-[14px] shadow-lg border border-gray-100 p-1.5 z-50">
                       {(["All", "Lunas", "Belum Dibayar"] as FilterType[]).map(f => (
-                        <button key={f} onClick={() => { setFilterStatus(f); setFilterOpen(false) }}
+                        <button key={f} onClick={() => { setFilterStatus(f); setFilterOpen(false); setCurrentPage(1) }}
                           className={`w-full text-left px-3 py-2.5 text-[12px] rounded-[10px] transition font-medium ${filterStatus === f ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-50"}`}>
                           {f}
                         </button>
                       ))}
                     </div>
                   )}
+                </div>
+
+                <div className="w-[160px] h-[34px] rounded-[10px] border border-gray-100 bg-white overflow-hidden">
+                  <input
+                    type="month"
+                    value={selectedMonth}
+                    onChange={e => { setSelectedMonth(e.target.value); setCurrentPage(1) }}
+                    className="w-full h-full px-3 text-[12px] text-gray-600 outline-none cursor-pointer"
+                    placeholder="Pilih bulan"
+                  />
                 </div>
               </div>
             </div>
@@ -782,6 +803,7 @@ const paginatedPayments =
                 <tr className="bg-gray-50/80">
                   <th className="text-left text-[11px] text-gray-400 font-semibold uppercase tracking-wide py-3 px-5">ID</th>
                   <th className="text-left text-[11px] text-gray-400 font-semibold uppercase tracking-wide py-3">Pemakaian</th>
+                  <th className="text-left text-[11px] text-gray-400 font-semibold uppercase tracking-wide py-3">Tanggal</th>
                   <th className="text-left text-[11px] text-gray-400 font-semibold uppercase tracking-wide py-3">Status</th>
                   <th className="text-left text-[11px] text-gray-400 font-semibold uppercase tracking-wide py-3 pr-5">Tagihan</th>
                 </tr>
@@ -798,6 +820,10 @@ const paginatedPayments =
 
       <td className="py-3.5 text-[13px] text-gray-500">
         {row.pemakaian}
+      </td>
+
+      <td className="py-3.5 text-[13px] text-gray-500">
+        {row.waktu}
       </td>
 
       <td className="py-3.5">
@@ -818,7 +844,7 @@ const paginatedPayments =
     </tr>
   )) : (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-[13px] text-gray-400">Tidak ada data yang cocok</td>
+                    <td colSpan={5} className="py-8 text-center text-[13px] text-gray-400">Tidak ada data yang cocok</td>
                   </tr>
                 )}
               </tbody>
@@ -944,7 +970,7 @@ const paginatedPayments =
                   </defs>
 
                   <Pie
-                    data={pieData}
+                    data={filteredPieData}
                     innerRadius={74}
                     outerRadius={114}
                     dataKey="value"
@@ -958,9 +984,9 @@ const paginatedPayments =
                 </PieChart>
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-[26px] leading-none font-semibold text-[#344054]">{paidPercentage.toFixed(0)}%</p>
+                  <p className="text-[26px] leading-none font-semibold text-[#344054]">{filteredPaidPercentage.toFixed(0)}%</p>
                   <p className="mt-[10px] text-[14px] leading-[22px] text-[#98A2B3] text-center font-normal">
-                    Sudah bayar {paidBills}<br />dari {totalBills} tagihan
+                    Sudah bayar {filteredPaidCount}<br />dari {filteredTotalCount} tagihan
                   </p>
                 </div>
               </div>

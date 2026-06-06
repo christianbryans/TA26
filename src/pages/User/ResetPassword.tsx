@@ -33,7 +33,7 @@ const handleSavePassword = async () => {
   try {
 
     await axios.post(
-      "http://localhost:3000/api/v1/auth/reset-password",
+      `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/auth/reset-password`,
       {
         token: localStorage.getItem("resetToken"),
         password,

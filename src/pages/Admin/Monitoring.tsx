@@ -1,22 +1,27 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import notifIcon from "../../assets/adminDasbord/Lonceng.svg"
 import Trash from "../../assets/adminMonitor/Trash.svg";
 
 /* ===================== DATA ===================== */
 
 const PER_PAGE = 10
+const STATUS_OPTIONS = ["Semua Status", "Lunas", "Belum Dibayar"]
 type UnitType = {
   id: string
   unit: string
   idMeter: string
   konsumsi: string
   email: string
+  waktu: string
   status: string
 }
 
 export default function Monitoring() {
   const [search,        setSearch]        = useState("")
   const [page,          setPage]          = useState(1)
+  const [statusFilter,  setStatusFilter]  = useState("Semua Status")
+  const [statusOpen,    setStatusOpen]    = useState(false)
+  const statusRef = useRef<HTMLDivElement>(null)
   const [menuOpen, setMenuOpen] =
   useState<string | null>(null)
   const [allUnits, setAllUnits] =
@@ -46,9 +51,19 @@ export default function Monitoring() {
         .toLowerCase()
         .includes(
           search.toLowerCase()
+        ) ||
+
+      row.waktu
+        .toLowerCase()
+        .includes(
+          search.toLowerCase()
         )
 
-    return matchSearch
+    const matchStatus =
+      statusFilter === "Semua Status" ||
+      row.status === statusFilter
+
+    return matchSearch && matchStatus
 
 })
 
@@ -66,6 +81,21 @@ export default function Monitoring() {
   const [selectedUnit, setSelectedUnit] = useState<any>(null)
 useEffect(() => {
 
+  const handleClickOutside = (event: MouseEvent) => {
+    if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
+      setStatusOpen(false)
+    }
+  }
+
+  document.addEventListener("click", handleClickOutside)
+
+  return () => {
+    document.removeEventListener("click", handleClickOutside)
+  }
+}, [])
+
+useEffect(() => {
+
   const fetchUnits =
     async () => {
 
@@ -76,7 +106,7 @@ useEffect(() => {
 
       const response =
         await fetch(
-          "http://localhost:3000/api/v1/admin/monitoring-units",
+          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/monitoring-units`,
           {
             headers: {
               Authorization:
@@ -142,17 +172,49 @@ useEffect(() => {
       {/* ================= FILTER SECTION ================= */}
       <div className="flex items-center justify-between gap-6">
 
-        {/* SEARCH */}
-        <div className="w-[450px] h-[50px] rounded-full border border-[#EAECF0] bg-white px-5 flex items-center gap-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+{/* SEARCH + STATUS FILTER */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+        <div className="flex-1 h-[50px] rounded-full border border-[#EAECF0] bg-white px-5 flex items-center gap-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-[18px] h-[18px] text-[#98A2B3] shrink-0">
             <circle cx="11" cy="11" r="7" /><path d="M20 20L17 17" />
           </svg>
-          <input type="text" placeholder="Cari unit, penghuni, nomor meter..." value={search}
+          <input type="text" placeholder="Cari unit, penghuni, nomor meter, waktu..." value={search}
             onChange={e => handleSearch(e.target.value)}
             className="w-full bg-transparent outline-none text-[14px] text-[#344054] placeholder:text-[#98A2B3]" />
           {search && (
             <button onClick={() => handleSearch("")} className="text-[#98A2B3] hover:text-[#344054] text-[18px] leading-none">×</button>
           )}
+        </div>
+
+        <div className="relative w-full sm:w-[220px]" ref={statusRef}>
+          <button
+            onClick={() => setStatusOpen((o) => !o)}
+            className="w-full h-[50px] rounded-full border border-[#EAECF0] bg-white px-5 flex items-center justify-between gap-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:bg-[#F9FAFB] transition"
+          >
+            <span className="text-[14px] text-[#344054]">{statusFilter}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`w-[16px] h-[16px] text-[#98A2B3] shrink-0 transition-transform ${statusOpen ? "rotate-180" : ""}`}>
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+
+          {statusOpen && (
+            <div className="absolute right-0 top-[56px] w-full bg-white rounded-[16px] shadow-lg border border-[#EAECF0] p-1.5 z-50">
+              {STATUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => {
+                    setStatusFilter(opt)
+                    setStatusOpen(false)
+                    setPage(1)
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-[13px] rounded-[12px] transition font-medium ${statusFilter === opt ? "bg-blue-50 text-blue-600" : "text-[#344054] hover:bg-[#F9FAFB]"}`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         </div>
 
       </div>
@@ -161,21 +223,25 @@ useEffect(() => {
       <div className="w-full bg-white rounded-[24px] border border-[#EEF2F6] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
 
         {/* HEADER */}
-        <div className="grid grid-cols-[1fr_1.4fr_1.6fr_60px] px-8 py-5 border-b border-[#F2F4F7]">
-          <p className="text-[14px] font-medium text-[#98A2B3]">Unit</p>
-          <p className="text-[14px] font-medium text-[#98A2B3]">ID Meter</p>
-          <p className="text-[14px] font-medium text-[#98A2B3]">Email Penghuni</p>
-          <div />
-        </div>
+      <div className="grid grid-cols-[1fr_1.4fr_1.6fr_1.4fr_1fr_60px] px-8 py-5 border-b border-[#F2F4F7]">
+        <p className="text-[14px] font-medium text-[#98A2B3]">Unit</p>
+        <p className="text-[14px] font-medium text-[#98A2B3]">ID Meter</p>
+        <p className="text-[14px] font-medium text-[#98A2B3]">Email Penghuni</p>
+        <p className="text-[14px] font-medium text-[#98A2B3]">Waktu</p>
+        <p className="text-[14px] font-medium text-[#98A2B3]">Status</p>
+        <div />
+      </div>
 
         {/* BODY */}
         <div className="divide-y divide-[#F2F4F7]">
           {paginated.length > 0 ? paginated.map(row => (
             <div key={row.id}
-              className="grid grid-cols-[1fr_1.4fr_1.6fr_60px] items-center px-8 py-6 hover:bg-[#F9FAFB] transition">
+              className="grid grid-cols-[1fr_1.4fr_1.6fr_1.4fr_1fr_60px] items-center px-8 py-6 hover:bg-[#F9FAFB] transition">
               <p className="text-[16px] font-medium text-[#344054]">{row.unit}</p>
               <p className="text-[16px] font-medium text-[#344054]">{row.idMeter}</p>
               <p className="text-[14px] font-normal text-[#98A2B3] truncate pr-4">{row.email}</p>
+              <p className="text-[14px] font-normal text-[#98A2B3] truncate pr-4">{row.waktu}</p>
+              <p className={`text-[13px] font-semibold px-3 py-1 rounded-full ${row.status === "Lunas" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-rose-50 text-rose-500 border border-rose-100"}`}>{row.status}</p>
        <button
   onClick={() =>
     setMenuOpen(menuOpen === row.id ? null : row.id)

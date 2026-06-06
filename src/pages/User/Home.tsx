@@ -50,7 +50,7 @@ export default function Home() {
 
         const response =
           await fetch(
-            "http://localhost:3000/api/v1/dashboard/monthly-volume",
+            `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/dashboard/monthly-volume`,
             {
               headers: {
                 Authorization:
@@ -104,7 +104,7 @@ async () => {
 
     const response =
       await fetch(
-        "http://localhost:3000/api/v1/dashboard/current-bill",
+        `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/dashboard/current-bill`,
         {
           headers: {
             Authorization:
@@ -153,7 +153,7 @@ const user =
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:3000/api/v1/dashboard/chart?range=${activeTab}`,
+          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/dashboard/chart?range=${activeTab}`,
           {
             headers: {
               Authorization: `Bearer ${token}`

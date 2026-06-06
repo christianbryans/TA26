@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000/api/v1";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
 
 export const getDashboardChart = async (token: string) => {
   const response = await fetch(`${API_URL}/dashboard/chart`, {

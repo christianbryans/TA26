@@ -106,7 +106,7 @@ export default function Billing() {
 
     const response =
       await fetch(
-        "http://localhost:3000/api/v1/admin/billing-table",
+        `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/billing-table`,
         {
           headers: {
             Authorization:
@@ -139,7 +139,7 @@ fetchBillingTable()
 
       const response =
         await fetch(
-          "http://localhost:3000/api/v1/admin/billing-stats",
+          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/admin/billing-stats`,
           {
             headers: {
               Authorization:
@@ -180,9 +180,12 @@ fetchBillingTable()
   const getMonthYearFromTerbit = (terbitStr: string) => {
     try {
       const months: { [key: string]: string } = {
-        "Januari": "01", "Februari": "02", "Maret": "03", "April": "04",
-        "Mei": "05", "Juni": "06", "Juli": "07", "Agustus": "08",
-        "September": "09", "Oktober": "10", "November": "11", "Desember": "12"
+        "Januari": "01", "Jan": "01", "Februari": "02", "Feb": "02",
+        "Maret": "03", "Mar": "03", "April": "04", "Apr": "04",
+        "Mei": "05", "Juni": "06", "Jun": "06", "Juli": "07", "Jul": "07",
+        "Agustus": "08", "Agu": "08", "September": "09", "Sep": "09",
+        "Oktober": "10", "Okt": "10", "November": "11", "Nov": "11",
+        "Desember": "12", "Des": "12"
       }
       const parts = terbitStr.split(" ")
       if (parts.length >= 3) {
@@ -247,6 +250,69 @@ fetchBillingTable()
 
   })
 
+  const filteredStats = {
+    total: {
+      amount: filtered.reduce(
+        (sum, row) => sum + (Number(row.amount) || 0),
+        0
+      ),
+      count: filtered.length,
+    },
+    paid: {
+      amount: filtered
+        .filter((row) => row.status === "Lunas")
+        .reduce((sum, row) => sum + (Number(row.amount) || 0), 0),
+      count: filtered.filter((row) => row.status === "Lunas").length,
+    },
+    unpaid: {
+      amount: filtered
+        .filter((row) => row.status === "Belum Dibayar")
+        .reduce((sum, row) => sum + (Number(row.amount) || 0), 0),
+      count: filtered.filter((row) => row.status === "Belum Dibayar").length,
+    },
+    overdue: {
+      amount: filtered
+        .filter((row) => {
+          if (row.status === "Lunas") return false
+          return row.dueDateISO
+            ? new Date(row.dueDateISO) < new Date()
+            : false
+        })
+        .reduce((sum, row) => sum + (Number(row.amount) || 0), 0),
+      count: filtered.filter((row) => {
+        if (row.status === "Lunas") return false
+        return row.dueDateISO
+          ? new Date(row.dueDateISO) < new Date()
+          : false
+      }).length,
+    },
+    collection: {
+      paid: filtered
+        .filter((row) => row.status === "Lunas")
+        .reduce((sum, row) => sum + (Number(row.amount) || 0), 0),
+      total: filtered.reduce(
+        (sum, row) => sum + (Number(row.amount) || 0),
+        0
+      ),
+      percentage: filtered.reduce(
+        (sum, row) => sum + (Number(row.amount) || 0),
+        0
+      ) > 0
+        ?
+          (filtered
+            .filter((row) => row.status === "Lunas")
+            .reduce((sum, row) => sum + (Number(row.amount) || 0), 0) /
+            filtered.reduce(
+              (sum, row) => sum + (Number(row.amount) || 0),
+              0
+            )
+          ) * 100
+        : 0,
+    },
+  }
+
+  const statsToDisplay = billingData.length > 0 ? filteredStats : stats
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentRows = filtered.slice(
     (page - 1) * PAGE_SIZE,
@@ -298,7 +364,7 @@ fetchBillingTable()
 
       {/* ── STAT CARDS ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {stats && (
+        {statsToDisplay && (
 
   <>
 
@@ -313,10 +379,10 @@ fetchBillingTable()
             maximumFractionDigits: 0
           }
         ).format(
-          stats.total.amount
+          statsToDisplay.total.amount
         )
       }
-      sub={`${stats.total.count} tagihan`}
+      sub={`${statsToDisplay.total.count} tagihan`}
       color="#344054"
       iconBg="#F2F4F7"
       icon={totalIcon}
@@ -333,10 +399,10 @@ fetchBillingTable()
             maximumFractionDigits: 0
           }
         ).format(
-          stats.paid.amount
+          statsToDisplay.paid.amount
         )
       }
-      sub={`${stats.paid.count} tagihan`}
+      sub={`${statsToDisplay.paid.count} tagihan`}
       color="#48A65A"
       iconBg="#D9F2DF"
       icon={bayar}
@@ -353,10 +419,10 @@ fetchBillingTable()
             maximumFractionDigits: 0
           }
         ).format(
-          stats.unpaid.amount
+          statsToDisplay.unpaid.amount
         )
       }
-      sub={`${stats.unpaid.count} tagihan menunggak`}
+      sub={`${statsToDisplay.unpaid.count} tagihan menunggak`}
       color="#E79B23"
       iconBg="#FCE8C4"
       icon={Belum}
@@ -373,10 +439,10 @@ fetchBillingTable()
             maximumFractionDigits: 0
           }
         ).format(
-          stats.overdue.amount
+          statsToDisplay.overdue.amount
         )
       }
-      sub={`${stats.overdue.count} tagihan lewat tempo`}
+      sub={`${statsToDisplay.overdue.count} tagihan lewat tempo`}
       color="#C9372C"
       iconBg="#F9E0DF"
       icon={Lewat}
@@ -405,7 +471,7 @@ fetchBillingTable()
             </p>
           </div>
           <p className="text-[16px] font-medium text-[#2481FF]">
-            {stats?.collection?.percentage
+            {statsToDisplay?.collection?.percentage
   ?.toFixed(1)}% terkumpul
           </p>
         </div>
@@ -415,7 +481,7 @@ fetchBillingTable()
             className="h-full rounded-full transition-all duration-500"
             style={{
               width:
-  `${stats?.collection?.percentage || 0}%`,
+  `${statsToDisplay?.collection?.percentage || 0}%`,
               background: "linear-gradient(90deg, #4DA1FF 0%, #002BFF 100%)",
             }}
           />
@@ -431,7 +497,7 @@ fetchBillingTable()
     maximumFractionDigits: 0
   }
 ).format(
-  stats?.collection?.paid || 0
+  statsToDisplay?.collection?.paid || 0
 )}
 {" / "}
 {new Intl.NumberFormat(
@@ -442,7 +508,7 @@ fetchBillingTable()
     maximumFractionDigits: 0
   }
 ).format(
-  stats?.collection?.total || 0
+  statsToDisplay?.collection?.total || 0
 )}
           </p>
         </div>

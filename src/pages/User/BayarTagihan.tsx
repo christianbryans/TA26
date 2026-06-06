@@ -26,9 +26,7 @@ async () => {
 
     const response =
       await fetch(
-        `http://localhost:3000/api/v1/payment/invoice/${currentBill.id}`,
-        {
-          headers: {
+          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/payment/invoice/${currentBill.id}`,
             Authorization:
               `Bearer ${token}`
           }
@@ -116,7 +114,7 @@ const [historyBills, setHistoryBills] =
 
 const currentBillResponse =
   await fetch(
-    "http://localhost:3000/api/v1/dashboard/current-bill",
+    `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/dashboard/current-bill`,
     {
       headers: {
         Authorization:
@@ -135,7 +133,7 @@ setCurrentBill(
       // DASHBOARD
       const dashboardResponse =
         await fetch(
-          "http://localhost:3000/api/v1/dashboard/monthly-volume",
+          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/dashboard/monthly-volume`,
           {
             headers: {
               Authorization:
@@ -165,7 +163,7 @@ setCurrentBill(
       // BILL HISTORY
       const billsResponse =
         await fetch(
-          `http://localhost:3000/api/v1/billing/user/${user.id}`
+          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/billing/user/${user.id}`
         );
 
       const billsData =
@@ -199,7 +197,7 @@ const handlePay = async () => {
 console.log("BILL ID", currentBill?.id);
 
    const response = await axios.post(
-  "http://localhost:3000/api/v1/payment",
+  `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/payment`,
   {
     billId: currentBill.id,
   }
