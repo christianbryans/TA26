@@ -73,13 +73,13 @@ app.get(['/health', '/api/v1/health'], (req, res) => {
   res.json({ status: 'OK' });
 });
 
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/customers', customerRoutes);
-app.use('/api/v1/devices', deviceRoutes);
-app.use('/api/v1/iot', iotRoutes);
-app.use('/api/v1/dashboard', dashboardRoutes);
-app.use('/api/v1/billing', billingRoutes);
-app.use('/api/v1/admin', adminRoutes);
+// app.use('/api/v1/auth', authRoutes);
+// app.use('/api/v1/customers', customerRoutes);
+// app.use('/api/v1/devices', deviceRoutes);
+// app.use('/api/v1/iot', iotRoutes);
+// app.use('/api/v1/dashboard', dashboardRoutes);
+// app.use('/api/v1/billing', billingRoutes);
+// app.use('/api/v1/admin', adminRoutes);
 
 
 app.use(errorHandler);
