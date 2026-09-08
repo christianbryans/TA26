@@ -5,6 +5,7 @@ import Gedung from "../assets/Login/Gedung.svg";
 import Logo from "../assets/Login/TeksAquora.svg";
 import Water from "../assets/Login/Water.svg";
 import Mobile from "../assets/Login/Mobile.svg";
+import { API_URL } from "../config/api";
 
 export default function ActivateAccount() {
   const [searchParams] = useSearchParams();
@@ -49,7 +50,7 @@ export default function ActivateAccount() {
 
     try {
       setLoading(true);
-      await axios.post("http://localhost:3000/api/v1/auth/activate-account", {
+      await axios.post(`${API_URL}/auth/activate-account`, {
         token,
         password,
       });

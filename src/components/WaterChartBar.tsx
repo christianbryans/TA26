@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { API_URL } from "../config/api";
 
 type ChartRange = "Harian" | "Mingguan" | "Bulanan";
 type ChartDatum = { x: string; value: number };
@@ -60,7 +61,7 @@ export default function WaterChartBar({ range }: WaterChartBarProps) {
 if (!token) return;
 
 const response = await fetch(
-  `http://localhost:3000/api/v1/dashboard/chart?range=${range}`,
+  `${API_URL}/dashboard/chart?range=${range}`,
   {
     headers: {
       Authorization:
@@ -97,7 +98,31 @@ if (!response.ok) {
   data.length > 0
     ? Math.max(...data.map(item => item.value))
     : 0;
-  const yMax = Math.ceil((maxValue + 5) / 10) * 10;
+  const getYAxisScale = (value: number) => {
+    if (value <= 0.5) {
+      return { top: 0.6, step: 0.2 };
+    }
+
+    if (value <= 2) {
+      return { top: 2, step: 0.5 };
+    }
+
+    if (value <= 5) {
+      return { top: 5, step: 1 };
+    }
+
+    if (value <= 20) {
+      return { top: Math.ceil(value / 5) * 5, step: 5 };
+    }
+
+    return { top: Math.ceil(value / 10) * 10, step: 10 };
+  };
+
+  const { top: yMax, step: yStep } = getYAxisScale(maxValue);
+  const yTicks = Array.from(
+    { length: Math.floor(yMax / yStep) + 1 },
+    (_, index) => Number((index * yStep).toFixed(1))
+  );
 
   return (
     <div className="w-full h-[240px]">
@@ -140,10 +165,11 @@ if (!response.ok) {
           <YAxis
             orientation="right"
             domain={[0, yMax]}
-            ticks={[10, 20, 30, 40, 50, 60].filter((tick) => tick <= yMax)}
+            ticks={yTicks}
             axisLine={false}
             tickLine={false}
             tick={{ fontSize: 11, fill: "#9CA3AF" }}
+            tickFormatter={(value) => `${value}`}
             tickMargin={6}
             width={30}
           />

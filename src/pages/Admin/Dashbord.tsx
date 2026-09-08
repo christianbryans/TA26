@@ -1,9 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell,
-} from "recharts"
-
+import { PieChart, Pie, Cell } from "recharts"
 import WaterChartAdmin from "../../components/WaterChartAdmin"
 
 import totalIcon    from "../../assets/adminDasbord/Total.svg"
@@ -12,57 +8,12 @@ import bulanIcon    from "../../assets/adminDasbord/Bulan.svg"
 import kelolaIcon   from "../../assets/adminDasbord/Kelola.svg"
 import notifIcon    from "../../assets/adminDasbord/Lonceng.svg"
 import Berhasil     from "../../assets/adminDasbord/Berhasil.svg"
-
-/* ===================== DATA ===================== */
-const barData = {
-  "1 Bulan Terakhir": [
-    { month: "Jan", values: [10000, 3000, 1200, 100] },
-  ],
-  "3 Bulan Terakhir": [
-    { month: "Jan", values: [10000, 3000, 1200, 100] },
-    { month: "Feb", values: [10000, 1200, 600, 300] },
-    { month: "Mar", values: [900, 600, 1200, 3000] },
-  ],
-  "6 Bulan Terakhir": [
-    { month: "Jan", values: [10000, 3000, 1200, 100] },
-    { month: "Feb", values: [10000, 1200, 600, 300] },
-    { month: "Mar", values: [900, 600, 1200, 3000] },
-    { month: "Apr", values: [600, 900, 5200, 3000] },
-    { month: "May", values: [3000, 1200, 5200, 3000] },
-    { month: "Jun", values: [1200, 3000, 1000, 2800] },
-  ],
-}
+import { API_URL } from "../../config/api";
 
 const RANGE_OPTIONS = ["3 Bulan Terakhir", "6 Bulan Terakhir"] as const
 type RangeType = typeof RANGE_OPTIONS[number]
 
-
-const UNIT_LIST = ["Unit A-10", "Unit A-11", "Unit A-12", "Unit B-01", "Unit B-02", "Unit C-05"]
-
 type FilterType = "All" | "Lunas" | "Belum Dibayar"
-
-
-/* ===================== CUSTOM ROUNDED BAR ===================== */
-function RoundedBar(props: any) {
-  const { x, y, height, fill } = props
-  if (!height || height <= 0) return null
-  return (
-    <rect x={x} y={y} width={36.06} height={height} rx={18} ry={18} fill={fill} />
-  )
-}
-
-/* ===================== CUSTOM TOOLTIP ===================== */
-function CustomTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-white border border-gray-100 rounded-[10px] shadow-lg px-3 py-2">
-      <p className="text-[11px] text-gray-400 mb-0.5">{label}</p>
-      <p className="text-[13px] font-semibold text-gray-800">
-        {payload[0].value.toLocaleString()} m³
-      </p>
-    </div>
-  )
-}
 
 /* ===================== STAT CARD ===================== */
 type StatCardProps = {
@@ -106,6 +57,7 @@ export default function Dashboard() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
 
 const [waterPrice, setWaterPrice] = useState("")
+const [currentWaterPrice, setCurrentWaterPrice] = useState<string>("")
 
   const [range, setRange] = useState<RangeType>("6 Bulan Terakhir")
   
@@ -116,6 +68,7 @@ const [waterPrice, setWaterPrice] = useState("")
 
   const [paymentSearch, setPaymentSearch] = useState("")
   const [filterStatus, setFilterStatus]   = useState<FilterType>("All")
+  const [selectedMonth, setSelectedMonth] = useState("")
   const [filterOpen, setFilterOpen]       = useState(false)
   const filterRef = useRef<HTMLDivElement>(null)
   const [activeDevices, setActiveDevices] =
@@ -127,21 +80,35 @@ const [todayUsage, setTodayUsage] =
   useState(0);
 const [unpaidTotal, setUnpaidTotal] =
   useState(0);
-  const [paidBills,
-  setPaidBills] =
-  useState(0);
 
-const [totalBills,
-  setTotalBills] =
-  useState(0);
+  useEffect(() => {
+    const loadCurrentPrice = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/admin/unit-price`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-const [paidPercentage,
-  setPaidPercentage] =
-  useState(0);
-  const pieData = [
-  { name: "Sudah bayar", value: paidPercentage },
-  { name: "Belum bayar", value: 100 - paidPercentage },
-]
+        const result = await response.json();
+        const latestPrice = result?.data?.price;
+
+        if (latestPrice !== undefined && latestPrice !== null) {
+          const latestValue = String(latestPrice);
+          setCurrentWaterPrice(latestValue);
+
+          if (showPricePopup || !waterPrice) {
+            setWaterPrice(latestValue);
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    loadCurrentPrice();
+  }, [showPricePopup]);
 
   useEffect(() => {
 const fetchAdminStats = async () => {
@@ -153,7 +120,7 @@ const fetchAdminStats = async () => {
 
       const response =
         await fetch(
-          "http://localhost:3000/api/v1/admin",
+          `${API_URL}/admin`,
           {
             headers: {
               Authorization:
@@ -195,18 +162,6 @@ setTodayUsage(
       setTotalUsers(
         result.totalUsers
       );
-
-      setPaidBills(
-  result.paidBills
-);
-
-setTotalBills(
-  result.totalBills
-);
-
-setPaidPercentage(
-  result.paidPercentage
-);
 
     } catch (error) {
 
@@ -258,7 +213,7 @@ useEffect(() => {
 
       const response =
         await fetch(
-          `http://localhost:3000/api/v1/admin/usage-chart?range=${months}`,
+          `${API_URL}/admin/usage-chart?range=${months}`,
           {
             headers: {
               Authorization:
@@ -331,7 +286,7 @@ const monthBadgeType =
 
       const response =
         await fetch(
-          "http://localhost:3000/api/v1/admin/payment-history",
+          `${API_URL}/admin/payment-history`,
           {
             headers: {
               Authorization:
@@ -361,10 +316,24 @@ const monthBadgeType =
 
 
   const filteredPayments = paymentHistory.filter(row => {
-    const matchSearch = row.id.toLowerCase().includes(paymentSearch.toLowerCase())
+    const matchSearch =
+      row.id.toLowerCase().includes(paymentSearch.toLowerCase()) ||
+      row.pemakaian.toLowerCase().includes(paymentSearch.toLowerCase()) ||
+      row.tagihan.toLowerCase().includes(paymentSearch.toLowerCase()) ||
+      row.waktu.toLowerCase().includes(paymentSearch.toLowerCase())
+
     const matchFilter = filterStatus === "All" || row.status === filterStatus
-    return matchSearch && matchFilter
+    const matchMonth = !selectedMonth || row.monthKey === selectedMonth
+    return matchSearch && matchFilter && matchMonth
   })
+
+  const filteredPaidCount = filteredPayments.filter((row) => row.status === "Lunas").length
+  const filteredTotalCount = filteredPayments.length
+  const filteredPaidPercentage = filteredTotalCount > 0 ? (filteredPaidCount / filteredTotalCount) * 100 : 0
+  const filteredPieData = [
+    { name: "Sudah bayar", value: filteredPaidPercentage },
+    { name: "Belum bayar", value: 100 - filteredPaidPercentage },
+  ]
 
   const itemsPerPage = 15
 
@@ -492,6 +461,10 @@ const paginatedPayments =
           Harga per m³
         </label>
 
+        <p className="mt-2 text-[12px] text-[#98A2B3]">
+          Harga saat ini: {currentWaterPrice ? `Rp ${Number(currentWaterPrice).toLocaleString('id-ID')}` : '-'}
+        </p>
+
         <input
           type="text"
           value={waterPrice}
@@ -508,6 +481,7 @@ const paginatedPayments =
             outline-none
             focus:border-[#3FACFF]
           "
+            placeholder={currentWaterPrice ? `Contoh: ${currentWaterPrice}` : "Masukkan harga per m³"}
         />
 
       </div>
@@ -530,7 +504,7 @@ const paginatedPayments =
 
     const response =
       await fetch(
-        "http://localhost:3000/api/v1/admin/unit-price",
+        `${API_URL}/admin/unit-price`,
         {
           method: "POST",
 
@@ -731,13 +705,23 @@ const paginatedPayments =
                   {filterOpen && (
                     <div className="absolute right-0 top-[40px] w-[160px] bg-white rounded-[14px] shadow-lg border border-gray-100 p-1.5 z-50">
                       {(["All", "Lunas", "Belum Dibayar"] as FilterType[]).map(f => (
-                        <button key={f} onClick={() => { setFilterStatus(f); setFilterOpen(false) }}
+                        <button key={f} onClick={() => { setFilterStatus(f); setFilterOpen(false); setCurrentPage(1) }}
                           className={`w-full text-left px-3 py-2.5 text-[12px] rounded-[10px] transition font-medium ${filterStatus === f ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-50"}`}>
                           {f}
                         </button>
                       ))}
                     </div>
                   )}
+                </div>
+
+                <div className="w-[160px] h-[34px] rounded-[10px] border border-gray-100 bg-white overflow-hidden">
+                  <input
+                    type="month"
+                    value={selectedMonth}
+                    onChange={e => { setSelectedMonth(e.target.value); setCurrentPage(1) }}
+                    className="w-full h-full px-3 text-[12px] text-gray-600 outline-none cursor-pointer"
+                    placeholder="Pilih bulan"
+                  />
                 </div>
               </div>
             </div>
@@ -747,6 +731,7 @@ const paginatedPayments =
                 <tr className="bg-gray-50/80">
                   <th className="text-left text-[11px] text-gray-400 font-semibold uppercase tracking-wide py-3 px-5">ID</th>
                   <th className="text-left text-[11px] text-gray-400 font-semibold uppercase tracking-wide py-3">Pemakaian</th>
+                  <th className="text-left text-[11px] text-gray-400 font-semibold uppercase tracking-wide py-3">Tanggal</th>
                   <th className="text-left text-[11px] text-gray-400 font-semibold uppercase tracking-wide py-3">Status</th>
                   <th className="text-left text-[11px] text-gray-400 font-semibold uppercase tracking-wide py-3 pr-5">Tagihan</th>
                 </tr>
@@ -763,6 +748,10 @@ const paginatedPayments =
 
       <td className="py-3.5 text-[13px] text-gray-500">
         {row.pemakaian}
+      </td>
+
+      <td className="py-3.5 text-[13px] text-gray-500">
+        {row.waktu}
       </td>
 
       <td className="py-3.5">
@@ -783,7 +772,7 @@ const paginatedPayments =
     </tr>
   )) : (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-[13px] text-gray-400">Tidak ada data yang cocok</td>
+                    <td colSpan={5} className="py-8 text-center text-[13px] text-gray-400">Tidak ada data yang cocok</td>
                   </tr>
                 )}
               </tbody>
@@ -909,7 +898,7 @@ const paginatedPayments =
                   </defs>
 
                   <Pie
-                    data={pieData}
+                    data={filteredPieData}
                     innerRadius={74}
                     outerRadius={114}
                     dataKey="value"
@@ -923,9 +912,9 @@ const paginatedPayments =
                 </PieChart>
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-[26px] leading-none font-semibold text-[#344054]">{paidPercentage.toFixed(0)}%</p>
+                  <p className="text-[26px] leading-none font-semibold text-[#344054]">{filteredPaidPercentage.toFixed(0)}%</p>
                   <p className="mt-[10px] text-[14px] leading-[22px] text-[#98A2B3] text-center font-normal">
-                    Sudah bayar {paidBills}<br />dari {totalBills} tagihan
+                    Sudah bayar {filteredPaidCount}<br />dari {filteredTotalCount} tagihan
                   </p>
                 </div>
               </div>

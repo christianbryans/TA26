@@ -7,6 +7,7 @@ import Logo from "../../assets/Login/TeksAquora.svg";
 import Water from "../../assets/Login/Water.svg";
 import Teks from "../../assets/adminDasbord/Logo.svg";
 import Berhasil from "../../assets/adminDasbord/Berhasil.svg";
+import { API_URL } from "../../config/api";
 
 export default function Login() {
 
@@ -34,43 +35,54 @@ export default function Login() {
   });
 
 const handleLogin = async () => {
+  if (!email || !password) {
+    setPopup({
+      open: true,
+      message: "Email dan password wajib diisi",
+      type: "error",
+    });
+    return;
+  }
 
   try {
+    console.info("Login request", {
+      url: `${API_URL}/auth/login`,
+      email,
+    });
 
     const response = await axios.post(
-      "http://localhost:3000/api/v1/auth/login",
+      `${API_URL}/auth/login`,
       {
         email,
         password,
       }
     );
 
-    // simpan token
-    localStorage.setItem(
-      "token",
-      response.data.token
-    );
+    localStorage.setItem("token", response.data.token);
+    localStorage.setItem("user", JSON.stringify(response.data.user));
 
-    // simpan user
-    localStorage.setItem(
-      "user",
-      JSON.stringify(response.data.user)
-    );
-
-    navigate("/home");
-
+    const nextRoute =
+      response.data.user?.role === "admin" ? "/admin" : "/home";
+    navigate(nextRoute);
   } catch (error: any) {
+    console.error("Login failed", {
+      apiUrl: API_URL,
+      email,
+      error: error.response || error,
+    });
+
+    const fallbackMessage =
+      error.response?.data?.message ||
+      error.response?.statusText ||
+      error.message ||
+      "Login gagal";
 
     setPopup({
       open: true,
-      message:
-        error.response?.data?.message ||
-        "Login gagal",
+      message: fallbackMessage,
       type: "error",
     });
-
   }
-
 };
 
 const handleClosePopup = () => {
@@ -103,6 +115,12 @@ const handleClosePopup = () => {
           membayar tagihan dengan lebih
           transparan dan praktis.
         </p>
+
+        {import.meta.env.DEV && (
+          <div className="mt-4 text-[11px] text-white/80">
+            API_URL: {API_URL}
+          </div>
+        )}
 
       {/* GEDUNG */}
 <div className="absolute right-0 bottom-0 w-[215px] h-[215px]">
@@ -344,6 +362,12 @@ const handleClosePopup = () => {
             <p className="text-[18px] text-[#64748B] mb-10">
               Masuk untuk melihat pemakaian dan tagihan air unit Anda.
             </p>
+
+            {import.meta.env.DEV && (
+              <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                API_URL: {API_URL}
+              </div>
+            )}
 
             {/* EMAIL */}
             <div className="mb-6">

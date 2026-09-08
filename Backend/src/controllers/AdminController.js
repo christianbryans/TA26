@@ -326,33 +326,48 @@ static async getPaymentHistory(req, res) {
   });
 
     const result =
-  bills.map((bill) => ({
+  bills.map((bill) => {
+      const date = bill.billingDate || bill.createdAt
+      const time = date
+        ? new Intl.DateTimeFormat("id-ID", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }).format(new Date(date))
+        : "-"
+      const monthKey = date
+        ? new Date(date).toISOString().slice(0, 7)
+        : ""
 
-    id: bill.userId,
+      return {
+        id: bill.userId,
 
-    pemakaian:
-      `${bill.waterUsage} m³`,
+        pemakaian:
+          `${bill.waterUsage} m³`,
 
-    status:
-      bill.status
-        ?.trim()
-        .toUpperCase() === "PAID"
-          ? "Lunas"
-          : "Belum Dibayar",
+        waktu: time,
+        monthKey,
 
-    tagihan:
-      new Intl.NumberFormat(
-        "id-ID",
-        {
-          style: "currency",
-          currency: "IDR",
-          maximumFractionDigits: 0
-        }
-      ).format(
-        bill.totalAmount
-      )
+        status:
+          bill.status
+            ?.trim()
+            .toUpperCase() === "PAID"
+              ? "Lunas"
+              : "Belum Dibayar",
 
-}));
+        tagihan:
+          new Intl.NumberFormat(
+            "id-ID",
+            {
+              style: "currency",
+              currency: "IDR",
+              maximumFractionDigits: 0
+            }
+          ).format(
+            bill.totalAmount
+          )
+      }
+  });
 
     return res.json(result);
 
@@ -412,6 +427,16 @@ static async getMonitoringUnits(req, res) {
           const latestBill =
             user.bills?.[0];
 
+          const time = latestBill
+            ? new Intl.DateTimeFormat("id-ID", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              }).format(new Date(latestBill.billingDate || latestBill.createdAt))
+            : "-";
+
           return {
 
             id: user.id,
@@ -430,6 +455,8 @@ static async getMonitoringUnits(req, res) {
 
             email:
               user.email,
+
+            waktu: time,
 
             status:
   latestBill?.status
@@ -689,6 +716,12 @@ static async getBillingTable(req, res) {
                 }
               ),
 
+            dueDateISO:
+              bill.dueDate?.toISOString(),
+
+            amount:
+              bill.totalAmount || 0,
+
             status:
   bill.status
     ?.trim()
@@ -760,6 +793,36 @@ static async updateUnitPrice(req, res) {
     return res.status(500).json({
       message:
         "Failed to update unit price"
+    });
+
+  }
+
+}
+
+static async getCurrentUnitPrice(req, res) {
+
+  try {
+
+    const latestPrice =
+      await prisma.unitPrice.findFirst({
+
+        orderBy: {
+          createdAt: "desc"
+        }
+
+      });
+
+    return res.json({
+      message: "Current unit price fetched successfully",
+      data: latestPrice
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Failed to load current unit price"
     });
 
   }

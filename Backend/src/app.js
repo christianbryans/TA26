@@ -31,12 +31,35 @@ app.use(limiter);
 */
 
 app.use(helmet());
-app.use(cors({
-  origin: 'http://localhost:5173', 
+const baseAllowedOrigins = [
+  'http://localhost:5173',
+  'https://smartwatermeter.l-prepaid.com',
+  'https://www.smartwatermeter.l-prepaid.com',
+];
+
+const envOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN
+      .split(',')
+      .map((origin) => origin.trim().toLowerCase())
+      .filter(Boolean)
+  : [];
+
+const allowedOrigins = [...new Set([...baseAllowedOrigins, ...envOrigins])];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    const normalizedOrigin = origin?.toLowerCase();
+    if (!origin || allowedOrigins.includes(normalizedOrigin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS policy does not allow access from ${origin}`));
+    }
+  },
   credentials: true,
-}))
-app.use(cors());
+};
+app.use(cors(corsOptions));
 app.use(morgan('dev'));
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -49,7 +72,7 @@ app.use(responseHandler);
 
 app.use('/api/users', userRoutes);
 
-app.get('/health', (req, res) => {
+app.get(['/health', '/api/v1/health'], (req, res) => {
   res.json({ status: 'OK' });
 });
 

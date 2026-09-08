@@ -1,28 +1,28 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import notifIcon from "../../assets/adminDasbord/Lonceng.svg"
 import Trash from "../../assets/adminMonitor/Trash.svg";
+import { API_URL } from "../../config/api";
 
 /* ===================== DATA ===================== */
 
-const STATUS_OPTIONS  = ["Semua Status",     "Lunas", "Belum Dibayar"] as const
-const PAYMENT_OPTIONS = ["Semua Pembayaran", "Lunas", "Belum Dibayar"] as const
 const PER_PAGE = 10
+const STATUS_OPTIONS = ["Semua Status", "Lunas", "Belum Dibayar"]
 type UnitType = {
   id: string
   unit: string
   idMeter: string
   konsumsi: string
   email: string
+  waktu: string
   status: string
 }
 
 export default function Monitoring() {
   const [search,        setSearch]        = useState("")
-  const [statusFilter,  setStatusFilter]  = useState<string>("Semua Status")
-  const [paymentFilter, setPaymentFilter] = useState<string>("Semua Pembayaran")
-  const [statusOpen,    setStatusOpen]    = useState(false)
-  const [paymentOpen,   setPaymentOpen]   = useState(false)
   const [page,          setPage]          = useState(1)
+  const [statusFilter,  setStatusFilter]  = useState("Semua Status")
+  const [statusOpen,    setStatusOpen]    = useState(false)
+  const statusRef = useRef<HTMLDivElement>(null)
   const [menuOpen, setMenuOpen] =
   useState<string | null>(null)
   const [allUnits, setAllUnits] =
@@ -52,29 +52,19 @@ export default function Monitoring() {
         .toLowerCase()
         .includes(
           search.toLowerCase()
+        ) ||
+
+      row.waktu
+        .toLowerCase()
+        .includes(
+          search.toLowerCase()
         )
 
     const matchStatus =
+      statusFilter === "Semua Status" ||
+      row.status === statusFilter
 
-      statusFilter ===
-        "Semua Status" ||
-
-      row.status ===
-        statusFilter
-
-    const matchPayment =
-
-      paymentFilter ===
-        "Semua Pembayaran" ||
-
-      row.status ===
-        paymentFilter
-
-    return (
-      matchSearch &&
-      matchStatus &&
-      matchPayment
-    )
+    return matchSearch && matchStatus
 
 })
 
@@ -85,13 +75,26 @@ export default function Monitoring() {
   const paginated  = filtered.slice(start, start + PER_PAGE)
   const goPage     = (p: number) => setPage(Math.max(1, Math.min(p, totalPages)))
 
-  const handleStatus  = (v: string) => { setStatusFilter(v);  setStatusOpen(false);  setPage(1) }
-  const handlePayment = (v: string) => { setPaymentFilter(v); setPaymentOpen(false); setPage(1) }
   const handleSearch  = (v: string) => { setSearch(v);        setPage(1) }
 
   const [showDeletePopup, setShowDeletePopup] = useState(false)
   const [showEditPopup, setShowEditPopup] = useState(false)
   const [selectedUnit, setSelectedUnit] = useState<any>(null)
+useEffect(() => {
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
+      setStatusOpen(false)
+    }
+  }
+
+  document.addEventListener("click", handleClickOutside)
+
+  return () => {
+    document.removeEventListener("click", handleClickOutside)
+  }
+}, [])
+
 useEffect(() => {
 
   const fetchUnits =
@@ -104,7 +107,7 @@ useEffect(() => {
 
       const response =
         await fetch(
-          "http://localhost:3000/api/v1/admin/monitoring-units",
+          `${API_URL}/admin/monitoring-units`,
           {
             headers: {
               Authorization:
@@ -170,12 +173,13 @@ useEffect(() => {
       {/* ================= FILTER SECTION ================= */}
       <div className="flex items-center justify-between gap-6">
 
-        {/* SEARCH */}
-        <div className="w-[450px] h-[50px] rounded-full border border-[#EAECF0] bg-white px-5 flex items-center gap-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+{/* SEARCH + STATUS FILTER */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+        <div className="flex-1 h-[50px] rounded-full border border-[#EAECF0] bg-white px-5 flex items-center gap-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-[18px] h-[18px] text-[#98A2B3] shrink-0">
             <circle cx="11" cy="11" r="7" /><path d="M20 20L17 17" />
           </svg>
-          <input type="text" placeholder="Cari unit, penghuni, nomor meter..." value={search}
+          <input type="text" placeholder="Cari unit, penghuni, nomor meter, waktu..." value={search}
             onChange={e => handleSearch(e.target.value)}
             className="w-full bg-transparent outline-none text-[14px] text-[#344054] placeholder:text-[#98A2B3]" />
           {search && (
@@ -183,89 +187,62 @@ useEffect(() => {
           )}
         </div>
 
-        {/* RIGHT FILTERS */}
-        <div className="flex items-center gap-4">
+        <div className="relative w-full sm:w-[220px]" ref={statusRef}>
+          <button
+            onClick={() => setStatusOpen((o) => !o)}
+            className="w-full h-[50px] rounded-full border border-[#EAECF0] bg-white px-5 flex items-center justify-between gap-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:bg-[#F9FAFB] transition"
+          >
+            <span className="text-[14px] text-[#344054]">{statusFilter}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`w-[16px] h-[16px] text-[#98A2B3] shrink-0 transition-transform ${statusOpen ? "rotate-180" : ""}`}>
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
 
-          {/* STATUS */}
-          <div className="relative">
-            <button
-              onClick={() => { setStatusOpen(!statusOpen); setPaymentOpen(false) }}
-              className="w-[190px] h-[50px] rounded-full border border-[#EAECF0] bg-white px-5 flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:bg-gray-50 transition"
-            >
-              <span className="text-[14px] text-[#344054]">{statusFilter}</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                className={`w-[16px] h-[16px] text-[#98A2B3] transition-transform ${statusOpen ? "rotate-180" : ""}`}>
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-            {statusOpen && (
-              <div className="absolute right-0 top-[56px] w-full bg-white rounded-[16px] shadow-lg border border-[#EAECF0] p-1.5 z-50">
-                {STATUS_OPTIONS.map(opt => (
-                  <button key={opt} onClick={() => handleStatus(opt)}
-                    className={`w-full text-left px-4 py-2.5 text-[13px] rounded-[12px] transition font-medium ${statusFilter === opt ? "bg-blue-50 text-blue-600" : "text-[#344054] hover:bg-gray-50"}`}>
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* PEMBAYARAN */}
-          <div className="relative">
-            <button
-              onClick={() => { setPaymentOpen(!paymentOpen); setStatusOpen(false) }}
-              className="w-[210px] h-[50px] rounded-full border border-[#EAECF0] bg-white px-5 flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:bg-gray-50 transition"
-            >
-              <span className="text-[14px] text-[#344054]">{paymentFilter}</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                className={`w-[16px] h-[16px] text-[#98A2B3] transition-transform ${paymentOpen ? "rotate-180" : ""}`}>
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-            {paymentOpen && (
-              <div className="absolute right-0 top-[56px] w-full bg-white rounded-[16px] shadow-lg border border-[#EAECF0] p-1.5 z-50">
-                {PAYMENT_OPTIONS.map(opt => (
-                  <button key={opt} onClick={() => handlePayment(opt)}
-                    className={`w-full text-left px-4 py-2.5 text-[13px] rounded-[12px] transition font-medium ${paymentFilter === opt ? "bg-blue-50 text-blue-600" : "text-[#344054] hover:bg-gray-50"}`}>
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
+          {statusOpen && (
+            <div className="absolute right-0 top-[56px] w-full bg-white rounded-[16px] shadow-lg border border-[#EAECF0] p-1.5 z-50">
+              {STATUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => {
+                    setStatusFilter(opt)
+                    setStatusOpen(false)
+                    setPage(1)
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-[13px] rounded-[12px] transition font-medium ${statusFilter === opt ? "bg-blue-50 text-blue-600" : "text-[#344054] hover:bg-[#F9FAFB]"}`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+        </div>
+
       </div>
 
       {/* ================= TABLE ================= */}
       <div className="w-full bg-white rounded-[24px] border border-[#EEF2F6] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
 
         {/* HEADER */}
-        <div className="grid grid-cols-[1fr_1.4fr_1fr_1.6fr_1fr_60px] px-8 py-5 border-b border-[#F2F4F7]">
-          <p className="text-[14px] font-medium text-[#98A2B3]">Unit</p>
-          <p className="text-[14px] font-medium text-[#98A2B3]">ID Meter</p>
-          <p className="text-[14px] font-medium text-[#98A2B3]">Konsumsi Bulan Ini</p>
-          <p className="text-[14px] font-medium text-[#98A2B3]">Email Penghuni</p>
-          <p className="text-[14px] font-medium text-[#98A2B3]">Pembayaran</p>
-          <div />
-        </div>
+      <div className="grid grid-cols-[1fr_1.4fr_1.6fr_1.4fr_1fr_60px] px-8 py-5 border-b border-[#F2F4F7]">
+        <p className="text-[14px] font-medium text-[#98A2B3]">Unit</p>
+        <p className="text-[14px] font-medium text-[#98A2B3]">ID Meter</p>
+        <p className="text-[14px] font-medium text-[#98A2B3]">Email Penghuni</p>
+        <p className="text-[14px] font-medium text-[#98A2B3]">Waktu</p>
+        <p className="text-[14px] font-medium text-[#98A2B3]">Status</p>
+        <div />
+      </div>
 
         {/* BODY */}
         <div className="divide-y divide-[#F2F4F7]">
           {paginated.length > 0 ? paginated.map(row => (
             <div key={row.id}
-              className="grid grid-cols-[1fr_1.4fr_1fr_1.6fr_1fr_60px] items-center px-8 py-6 hover:bg-[#F9FAFB] transition">
+              className="grid grid-cols-[1fr_1.4fr_1.6fr_1.4fr_1fr_60px] items-center px-8 py-6 hover:bg-[#F9FAFB] transition">
               <p className="text-[16px] font-medium text-[#344054]">{row.unit}</p>
               <p className="text-[16px] font-medium text-[#344054]">{row.idMeter}</p>
-              <p className="text-[16px] font-medium text-[#344054]">{row.konsumsi}</p>
               <p className="text-[14px] font-normal text-[#98A2B3] truncate pr-4">{row.email}</p>
-              <div>
-                <span className={`inline-flex items-center justify-center px-[14px] h-[30px] rounded-full text-[13px] font-medium ${
-                  row.status === "Belum Dibayar" ? "bg-[#FEE4E2] text-[#F04438]" : "bg-[#D9F0A3] text-[#5F7A00]"
-                }`}>
-                  {row.status}
-                </span>
-              </div>
+              <p className="text-[14px] font-normal text-[#98A2B3] truncate pr-4">{row.waktu}</p>
+              <p className={`text-[13px] font-semibold px-3 py-1 rounded-full ${row.status === "Lunas" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-rose-50 text-rose-500 border border-rose-100"}`}>{row.status}</p>
        <button
   onClick={() =>
     setMenuOpen(menuOpen === row.id ? null : row.id)

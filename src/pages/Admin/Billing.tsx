@@ -5,6 +5,7 @@ import totalIcon from "../../assets/adminDasbord/Total.svg"
 import bayar from "../../assets/AdminBilling/Paid.svg"
 import Belum from "../../assets/AdminBilling/Wait.svg"
 import Lewat from "../../assets/AdminBilling/JatuhTempo.svg"
+import { API_URL } from "../../config/api";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
@@ -85,6 +86,9 @@ export default function Billing() {
   const [statusFilter, setStatusFilter] = useState<string>("Semua Status")
   const [statusOpen, setStatusOpen] = useState(false)
   const [page, setPage] = useState(1)
+  const [selectedMonth, setSelectedMonth] = useState(
+    new Date().toISOString().slice(0, 7)
+  )
 
   const statusRef = useRef<HTMLDivElement>(null)
   const [stats, setStats] =
@@ -103,7 +107,7 @@ export default function Billing() {
 
     const response =
       await fetch(
-        "http://localhost:3000/api/v1/admin/billing-table",
+        `${API_URL}/admin/billing-table`,
         {
           headers: {
             Authorization:
@@ -136,7 +140,7 @@ fetchBillingTable()
 
       const response =
         await fetch(
-          "http://localhost:3000/api/v1/admin/billing-stats",
+          `${API_URL}/admin/billing-stats`,
           {
             headers: {
               Authorization:
@@ -173,6 +177,32 @@ fetchBillingTable()
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  // Helper: Extract month-year from terbit date string (e.g., "1 Mei 2026" -> "2026-05")
+  const getMonthYearFromTerbit = (terbitStr: string) => {
+    try {
+      const months: { [key: string]: string } = {
+        "Januari": "01", "Jan": "01", "Februari": "02", "Feb": "02",
+        "Maret": "03", "Mar": "03", "April": "04", "Apr": "04",
+        "Mei": "05", "Juni": "06", "Jun": "06", "Juli": "07", "Jul": "07",
+        "Agustus": "08", "Agu": "08", "September": "09", "Sep": "09",
+        "Oktober": "10", "Okt": "10", "November": "11", "Nov": "11",
+        "Desember": "12", "Des": "12"
+      }
+      const parts = terbitStr.split(" ")
+      if (parts.length >= 3) {
+        const monthName = parts[1]
+        const year = parts[2]
+        const monthNum = months[monthName]
+        if (monthNum && year) {
+          return `${year}-${monthNum}`
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing terbit date:", e)
+    }
+    return null
+  }
+
   // Filter data
   const filtered =
   billingData.filter(
@@ -180,7 +210,8 @@ fetchBillingTable()
       unit,
       email,
       id,
-      status
+      status,
+      terbit
     }) => {
 
       const q =
@@ -208,12 +239,80 @@ fetchBillingTable()
         status ===
           statusFilter
 
+      const matchMonth =
+        !selectedMonth ||
+        getMonthYearFromTerbit(terbit) === selectedMonth
+
       return (
         matchSearch &&
-        matchStatus
+        matchStatus &&
+        matchMonth
       )
 
-})
+  })
+
+  const filteredStats = {
+    total: {
+      amount: filtered.reduce(
+        (sum, row) => sum + (Number(row.amount) || 0),
+        0
+      ),
+      count: filtered.length,
+    },
+    paid: {
+      amount: filtered
+        .filter((row) => row.status === "Lunas")
+        .reduce((sum, row) => sum + (Number(row.amount) || 0), 0),
+      count: filtered.filter((row) => row.status === "Lunas").length,
+    },
+    unpaid: {
+      amount: filtered
+        .filter((row) => row.status === "Belum Dibayar")
+        .reduce((sum, row) => sum + (Number(row.amount) || 0), 0),
+      count: filtered.filter((row) => row.status === "Belum Dibayar").length,
+    },
+    overdue: {
+      amount: filtered
+        .filter((row) => {
+          if (row.status === "Lunas") return false
+          return row.dueDateISO
+            ? new Date(row.dueDateISO) < new Date()
+            : false
+        })
+        .reduce((sum, row) => sum + (Number(row.amount) || 0), 0),
+      count: filtered.filter((row) => {
+        if (row.status === "Lunas") return false
+        return row.dueDateISO
+          ? new Date(row.dueDateISO) < new Date()
+          : false
+      }).length,
+    },
+    collection: {
+      paid: filtered
+        .filter((row) => row.status === "Lunas")
+        .reduce((sum, row) => sum + (Number(row.amount) || 0), 0),
+      total: filtered.reduce(
+        (sum, row) => sum + (Number(row.amount) || 0),
+        0
+      ),
+      percentage: filtered.reduce(
+        (sum, row) => sum + (Number(row.amount) || 0),
+        0
+      ) > 0
+        ?
+          (filtered
+            .filter((row) => row.status === "Lunas")
+            .reduce((sum, row) => sum + (Number(row.amount) || 0), 0) /
+            filtered.reduce(
+              (sum, row) => sum + (Number(row.amount) || 0),
+              0
+            )
+          ) * 100
+        : 0,
+    },
+  }
+
+  const statsToDisplay = billingData.length > 0 ? filteredStats : stats
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentRows = filtered.slice(
@@ -266,7 +365,7 @@ fetchBillingTable()
 
       {/* ── STAT CARDS ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {stats && (
+        {statsToDisplay && (
 
   <>
 
@@ -281,10 +380,10 @@ fetchBillingTable()
             maximumFractionDigits: 0
           }
         ).format(
-          stats.total.amount
+          statsToDisplay.total.amount
         )
       }
-      sub={`${stats.total.count} tagihan`}
+      sub={`${statsToDisplay.total.count} tagihan`}
       color="#344054"
       iconBg="#F2F4F7"
       icon={totalIcon}
@@ -301,10 +400,10 @@ fetchBillingTable()
             maximumFractionDigits: 0
           }
         ).format(
-          stats.paid.amount
+          statsToDisplay.paid.amount
         )
       }
-      sub={`${stats.paid.count} tagihan`}
+      sub={`${statsToDisplay.paid.count} tagihan`}
       color="#48A65A"
       iconBg="#D9F2DF"
       icon={bayar}
@@ -321,10 +420,10 @@ fetchBillingTable()
             maximumFractionDigits: 0
           }
         ).format(
-          stats.unpaid.amount
+          statsToDisplay.unpaid.amount
         )
       }
-      sub={`${stats.unpaid.count} tagihan menunggak`}
+      sub={`${statsToDisplay.unpaid.count} tagihan menunggak`}
       color="#E79B23"
       iconBg="#FCE8C4"
       icon={Belum}
@@ -341,10 +440,10 @@ fetchBillingTable()
             maximumFractionDigits: 0
           }
         ).format(
-          stats.overdue.amount
+          statsToDisplay.overdue.amount
         )
       }
-      sub={`${stats.overdue.count} tagihan lewat tempo`}
+      sub={`${statsToDisplay.overdue.count} tagihan lewat tempo`}
       color="#C9372C"
       iconBg="#F9E0DF"
       icon={Lewat}
@@ -373,7 +472,7 @@ fetchBillingTable()
             </p>
           </div>
           <p className="text-[16px] font-medium text-[#2481FF]">
-            {stats?.collection?.percentage
+            {statsToDisplay?.collection?.percentage
   ?.toFixed(1)}% terkumpul
           </p>
         </div>
@@ -383,7 +482,7 @@ fetchBillingTable()
             className="h-full rounded-full transition-all duration-500"
             style={{
               width:
-  `${stats?.collection?.percentage || 0}%`,
+  `${statsToDisplay?.collection?.percentage || 0}%`,
               background: "linear-gradient(90deg, #4DA1FF 0%, #002BFF 100%)",
             }}
           />
@@ -399,7 +498,7 @@ fetchBillingTable()
     maximumFractionDigits: 0
   }
 ).format(
-  stats?.collection?.paid || 0
+  statsToDisplay?.collection?.paid || 0
 )}
 {" / "}
 {new Intl.NumberFormat(
@@ -410,7 +509,7 @@ fetchBillingTable()
     maximumFractionDigits: 0
   }
 ).format(
-  stats?.collection?.total || 0
+  statsToDisplay?.collection?.total || 0
 )}
           </p>
         </div>
@@ -498,6 +597,19 @@ fetchBillingTable()
                 ))}
               </div>
             )}
+          </div>
+
+          {/* MONTH PICKER */}
+          <div className="w-[160px] h-[50px] rounded-full border border-[#EAECF0] bg-white px-5 flex items-center shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => {
+                setSelectedMonth(e.target.value)
+                setPage(1)
+              }}
+              className="w-full bg-transparent outline-none text-[14px] text-[#344054] cursor-pointer"
+            />
           </div>
         </div>
 

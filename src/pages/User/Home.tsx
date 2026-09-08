@@ -11,6 +11,7 @@ import Line from "../../assets/beranda/Line.svg";
 import Persen from "../../assets/beranda/persen.svg";
 import LogoutIcon from "../../assets/beranda/Logout.svg";
 import IconLogout from "../../assets/beranda/IconLogout.svg";
+import { API_URL } from "../../config/api";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -21,8 +22,6 @@ export default function Home() {
   const [monthlyVolume, setMonthlyVolume] =
   useState(0);
   const [monthlyDifference, setMonthlyDifference] =
-  useState(0);
-  const [estimatedBill, setEstimatedBill] =
   useState(0);
   
   const [showLogoutPopup, setShowLogoutPopup] =
@@ -50,7 +49,7 @@ export default function Home() {
 
         const response =
           await fetch(
-            "http://localhost:3000/api/v1/dashboard/monthly-volume",
+            `${API_URL}/dashboard/monthly-volume`,
             {
               headers: {
                 Authorization:
@@ -69,10 +68,6 @@ export default function Home() {
         setMonthlyDifference(
   result.difference
 );
-
-        setEstimatedBill(
-          result.estimatedBill
-        );
 
       } catch (error) {
 
@@ -104,7 +99,7 @@ async () => {
 
     const response =
       await fetch(
-        "http://localhost:3000/api/v1/dashboard/current-bill",
+        `${API_URL}/dashboard/current-bill`,
         {
           headers: {
             Authorization:
@@ -153,7 +148,7 @@ const user =
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:3000/api/v1/dashboard/chart?range=${activeTab}`,
+          `${API_URL}/dashboard/chart?range=${activeTab}`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -250,7 +245,7 @@ const dueDateText =
                   </span>
                 </div>
               </div>
-              <p className="text-gray-400 text-[10px]">Pemakaian Bulan Ini</p>
+              <p className="text-gray-400 text-[10px]">Pemakaian Kamu</p>
               <h2 className="text-[22px] font-bold mt-1 text-gray-900">{(monthlyVolume/1000).toFixed(1)} m³</h2>
               <p
   className={`text-[10px] font-semibold mt-2 ${

@@ -6,6 +6,7 @@ import Berhasil from "../../assets/adminDasbord/Berhasil.svg";
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../config/api";
 
 export default function ResetPassword() {
 
@@ -33,7 +34,7 @@ const handleSavePassword = async () => {
   try {
 
     await axios.post(
-      "http://localhost:3000/api/v1/auth/reset-password",
+      `${API_URL}/auth/reset-password`,
       {
         token: localStorage.getItem("resetToken"),
         password,
